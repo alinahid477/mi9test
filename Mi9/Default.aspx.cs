@@ -12,40 +12,51 @@ namespace Mi9
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Request.HttpMethod == "POST")
+            Mi9.Lib.Models.ErrorDTO errorDTO = new Lib.Models.ErrorDTO();
+            //Response.AddHeader("Content-Disposition", "attachment;filename=response.json");
+            Response.ContentType = "application/json; charset=utf-8";
+            string responseStr = "";
+            try
             {
-                Dictionary<string, string> d = new Dictionary<string, string>();
+                if (!Request.HttpMethod.Equals("POST"))
+                {
+                    throw new Mi9.Lib.Exceptions.PayloadReadException("Could not decode request: Only post is allowed");
+                }
+
                 string json = new System.IO.StreamReader(Request.InputStream).ReadToEnd();
                 Mi9.Lib.Models.PayloadModel model = new Lib.Models.PayloadModel();
-                try
-                {
-                    model.Read(json);
-                    string s = model.Write();
-                    Response.ContentType = "text/json";
-                    Response.Write(s);
-                }
-                catch (Mi9.Lib.Exceptions.PayloadReadException pre)
-                {
-                    Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-                    d.Add("error", pre.Message);
-                }
-                catch (Mi9.Lib.Exceptions.PayloadValidationException pve)
-                {
-                    Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-                    d.Add("error", pve.Message);
-                }
-                catch (Mi9.Lib.Exceptions.PayloadWriteException pwe)
-                {
-                    Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-                    d.Add("error", pwe.Message);
-                }
-                Response.ContentType = "text/json";
-                Response.Write(JsonConvert.SerializeObject(d));
-                return;
-            }
-            Response.ContentType = "text/plain";
-            Response.Write("Invalid request. Only post allowed.");
 
+
+                model.Read(json);
+                responseStr = model.Write();
+                Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+                //Response.Write(s);
+            }
+            catch (Mi9.Lib.Exceptions.PayloadReadException pre)
+            {
+                Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+                errorDTO.Error = pre.Message;
+            }
+            catch (Mi9.Lib.Exceptions.PayloadValidationException pve)
+            {
+                Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+                errorDTO.Error = pve.Message;
+            }
+            catch (Mi9.Lib.Exceptions.PayloadWriteException pwe)
+            {
+                Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+                errorDTO.Error = pwe.Message;
+
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(errorDTO.Error))
+                    responseStr = JsonConvert.SerializeObject(errorDTO, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new Mi9.Lib.Utils.LowercaseContractResolver() });
+
+                Response.Write(responseStr);
+            }
+
+            
         }
     }
 }

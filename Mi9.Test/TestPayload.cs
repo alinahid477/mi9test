@@ -41,6 +41,8 @@ namespace Mi9.Test
         public void TestPayloadRead()
         {
             payload.Read(payloadSource);
+            Assert.IsNotNull(payload.InputPayload);
+            Assert.IsTrue(payload.InputPayload.Payload.Count > 0);
         }
 
         [TestMethod]
@@ -48,6 +50,7 @@ namespace Mi9.Test
         {
             this.TestPayloadRead();
             string output = payload.Write();
+            Assert.IsFalse(string.IsNullOrEmpty(output));
         }
     }
 }

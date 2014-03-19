@@ -8,6 +8,21 @@ namespace Mi9.Lib.Models
 {
     public class RequestDTO
     {
-        public List<Payload> Payload = new List<Payload>();
+        public List<PayloadObj> Payload = new List<PayloadObj>();
+
+
+        public class PayloadObj
+        {
+            public bool Drm { get; set; }
+            public int EpisodeCount { get; set; }
+            public ImageClass Image { get; set; }
+            public string Slug { get; set; }
+            public string Title { get; set; }
+
+            public class ImageClass
+            {
+                public string ShowImage { get; set; }
+            }
+        }
     }
 }

@@ -19,13 +19,17 @@ namespace Mi9.Lib.Models
             if(InputPayload == null || InputPayload.Payload.Count < 1)
             {
                 this.IsValid = false;
-                throw new PayloadValidationException("Empty payload found.");
+                throw new PayloadValidationException("Could not decode request: Empty payload found.");
             }
         }
 
 
         public void Read(string source)
         {
+            if (string.IsNullOrEmpty(source))
+            {
+                throw new PayloadReadException("Could not decode request: Empty payload found");
+            }
             try
             {
                 this.InputPayload = JsonConvert.DeserializeObject<RequestDTO>(source);
@@ -39,9 +43,9 @@ namespace Mi9.Lib.Models
 
         public void DoQuery()
         {
-            List<Payload> pyloads = this.InputPayload.Payload.Where(pl => pl.Drm == true && pl.EpisodeCount > 0).ToList();
+            List<Mi9.Lib.Models.RequestDTO.PayloadObj> pyloads = this.InputPayload.Payload.Where(pl => pl.Drm == true && pl.EpisodeCount > 0).ToList();
             OutputPayload = new ResponseDTO();
-            foreach(Payload p in pyloads)
+            foreach(Mi9.Lib.Models.RequestDTO.PayloadObj p in pyloads)
             {
                 OutputPayload.Response.Add(new ResponseDTO.ResponseObject(){
                     Image = p.Image != null ? p.Image.ShowImage : "",
@@ -59,23 +63,13 @@ namespace Mi9.Lib.Models
             {
                 if (OutputPayload == null || OutputPayload.Response.Count < 1)
                     this.DoQuery();
-                output = JsonConvert.SerializeObject(this.OutputPayload, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new LowercaseContractResolver() });
+                output = JsonConvert.SerializeObject(this.OutputPayload, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new Mi9.Lib.Utils.LowercaseContractResolver() });
             }
             catch {
                 this.IsValid = false;
-                throw new PayloadWriteException("Could generate response: JSON generation failed.");
+                throw new PayloadWriteException("Could not decode request: JSON generation failed.");
             }
             return output;
         }
-
-
-        public class LowercaseContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
-        {
-            protected override string ResolvePropertyName(string propertyName)
-            {
-                return propertyName.ToLower();
-            }
-        }
-
     }
 }

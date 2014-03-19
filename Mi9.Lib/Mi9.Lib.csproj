@@ -46,8 +46,9 @@
     <Compile Include="Exceptions\PayloadReadException.cs" />
     <Compile Include="Exceptions\PayloadValidationException.cs" />
     <Compile Include="Models\BaseModel.cs" />
+    <Compile Include="Models\ErrorDTO.cs" />
     <Compile Include="Models\IModel.cs" />
-    <Compile Include="Models\Payload.cs" />
+    <Compile Include="Utils\LowercaseContractResolver.cs" />
     <Compile Include="Models\PayloadModel.cs" />
     <Compile Include="Models\RequestDTO.cs" />
     <Compile Include="Models\ResponseDTO.cs" />

@@ -14,39 +14,48 @@ namespace Mi9
 
         public void ProcessRequest(HttpContext context)
         {
-            if (context.Request.HttpMethod == "POST")
+            Mi9.Lib.Models.ErrorDTO errorDTO = new Lib.Models.ErrorDTO();
+            //context.Response.AddHeader("Content-Disposition", "attachment;filename=context.Response.json");
+            context.Response.ContentType = "application/json; charset=utf-8";
+            string responseStr = "";
+            try
             {
-                Dictionary<string, string> d = new Dictionary<string, string>();
+                if (!context.Request.HttpMethod.Equals("POST"))
+                {
+                    throw new Mi9.Lib.Exceptions.PayloadReadException("Could not decode request: Only post method is allowed");
+                }
+
                 string json = new System.IO.StreamReader(context.Request.InputStream).ReadToEnd();
                 Mi9.Lib.Models.PayloadModel model = new Lib.Models.PayloadModel();
-                try
-                {
-                    model.Read(json);
-                    string s = model.Write();
-                    context.Response.ContentType = "text/json";
-                    context.Response.Write(s);
-                }
-                catch (Mi9.Lib.Exceptions.PayloadReadException pre)
-                {
-                    context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-                    d.Add("error", pre.Message);
-                }
-                catch (Mi9.Lib.Exceptions.PayloadValidationException pve)
-                {
-                    context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-                    d.Add("error", pve.Message);
-                }
-                catch (Mi9.Lib.Exceptions.PayloadWriteException pwe)
-                {
-                    context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-                    d.Add("error", pwe.Message);
-                }
-                context.Response.ContentType = "text/json";
-                context.Response.Write(JsonConvert.SerializeObject(d));
-                return;
+
+
+                model.Read(json);
+                responseStr = model.Write();
+                context.Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+                //context.Response.Write(s);
             }
-            context.Response.ContentType = "text/plain";
-            context.Response.Write("Invalid request. Only post allowed.");
+            catch (Mi9.Lib.Exceptions.PayloadReadException pre)
+            {
+                context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+                errorDTO.Error = pre.Message;
+            }
+            catch (Mi9.Lib.Exceptions.PayloadValidationException pve)
+            {
+                context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+                errorDTO.Error = pve.Message;
+            }
+            catch (Mi9.Lib.Exceptions.PayloadWriteException pwe)
+            {
+                context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+                errorDTO.Error = pwe.Message;
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(errorDTO.Error))
+                    responseStr = JsonConvert.SerializeObject(errorDTO, Formatting.Indented, new JsonSerializerSettings { ContractResolver = new Mi9.Lib.Utils.LowercaseContractResolver() });
+
+                context.Response.Write(responseStr);
+            }
             
 
             
